@@ -32,6 +32,7 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for GPU resources to be released...
 sleep 2
 
 # Step 2: Image Description
+echo "-------------------------------------------"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting image description..."
 python flatdeck_image_descriptor.py
 if [ $? -ne 0 ]; then
@@ -44,16 +45,31 @@ echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for GPU resources to be released...
 sleep 2
 
 # Step 3: OCR Text Processing
+echo "-------------------------------------------"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting OCR text processing..."
-python flatdeck_chat_processor.py
+python flatdeck_chat_processor.py --task ocr_fix
 if [ $? -ne 0 ]; then
     echo "WARNING: OCR text processing failed. Continuing with markdown generation..."
 fi
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] OCR text processing completed."
 
-# Step 4: Markdown Generation
+# Allow some time for GPU resources to be released
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for GPU resources to be released..."
+sleep 2
+
+# Step 4: Page Summary Processing
+echo "-------------------------------------------"
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting page summary creation..."
+python flatdeck_chat_processor.py --task page_summary
+if [ $? -ne 0 ]; then
+    echo "WARNING: Page summary processing failed. Continuing with markdown generation..."
+fi
+echo "[$(date '+%Y-%m-%d %H:%M:%S')] OCR text processing completed."
+
+# Step 5: Markdown Generation
+echo "-------------------------------------------"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Generating markdown output..."
-python flatdeck_markdown.py "$PDF_PATH"
+python flatdeck_markdown.py "$PDF_PATH" --output_type summary
 if [ $? -ne 0 ]; then
     echo "ERROR: Markdown generation failed!"
     exit 1

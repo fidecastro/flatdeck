@@ -357,6 +357,7 @@ class PDFIngestor:
             
             # Initialize content structure
             content = {
+                "page_summary": "",
                 "text_data": "",
                 "page_description": "",
                 "image_data": image_data,

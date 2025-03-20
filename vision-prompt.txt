@@ -1,3 +1,7 @@
-Describe this image in full detail.
-
-
+Describe this image in detail, extracted from a PDF file. Follow these instructions:
+1. Start by figuring out what it is and write it down -- for instance, it may be a full slide, a spreadsheet, a book page, a document page, or even just a figure/table/chart/infographic/logo etc.
+2. If there are any graphs/infographs in it, describe it, write any text that is written in it, and interpret it.
+3. If there are any titles in the image, add to your description.
+4. If it seems to be a logo, just do your best to identify what company or product it relates to. Don't waste your time describing it too much.
+5. If there are any text or tables in it, write a summary of its content. If it's short enough, you may write its full content.
+6. Don't preamble the response with anything. Skip straight to the description.

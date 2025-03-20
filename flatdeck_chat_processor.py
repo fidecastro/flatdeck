@@ -49,6 +49,14 @@ Find above four different text extraction outputs from the same PDF page: three 
 Bear in mind that extracted text may be prone to errors, including, but not limited to: formatting, wrong characters, wrong paragraph ordering, mispelled or misplaced words, etc. Typically the NO OCR input is the most accurate for text, but it may lack important information that OCR engines can provide, especially when it comes to table data and formatting.
 
 Your goal is to provide a Markdown version of the correct text, using these inputs as your base. You MUST output ONLY the rewritten text/table without any additional explanations."""
+
+        # Base prompt for content summary
+        self.base_summary_prompt = """
+Read the text data extracted from a PDF page, created by OCR, and a description of the image of the page, created by a vision-enabled LLM. You must rewrite the content of the page based on these two inputs, aggregating ALL information contained in them. You must bear in mind the limitations of each source: the text input is more precise than the image description; but, but the image description also contains a lot of metadata that is completely off-limits to the text data alone (for example, descriptions of charts/infographs, logos, etc).
+
+Bear in mind that the image description is more relevant to slides and pages with a lot of images, while the text data is more relevant to pages (ex: book pages, text emails, etc).
+
+To be clear, your task is to consolidate both Page_Text_Data and Page_Image_Description in a single output, which will represent the totality of the information contained in it. You must output ONLY the rewritten content of the page, without any additional explanations."""
     
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """
@@ -236,6 +244,32 @@ Your goal is to provide a Markdown version of the correct text, using these inpu
 {self.base_ocr_prompt}"""
         
         return prompt
+
+    def create_content_summary_prompt(self, page_data: Dict[str, Any]) -> str:
+        """
+        Create a summary of the content on the page based on the fixed OCR output and the description of the image.
+        
+        Args:
+            page_data: Dictionary containing page data
+            
+        Returns:
+            Prompt string for the LLM
+        """
+
+        # Extract the text data and the page description
+        text_data = page_data['content'].get('text_data', ''),
+        page_description = page_data['content'].get('page_description', '')
+        
+        # Create the final prompt template
+        prompt = f"""<Page_Text_Data>
+{text_data}</Page_Text_Data>
+
+<Page_Image_Description>
+{page_description}</Page_Image_Description>
+
+{self.base_summary_prompt}"""
+        
+        return prompt
     
     def route_task(self, task: str, page_data: Dict[str, Any]) -> str:
         """
@@ -250,6 +284,8 @@ Your goal is to provide a Markdown version of the correct text, using these inpu
         """
         if task == "ocr_fix":
             return self.create_ocr_fix_prompt(page_data)
+        elif task == "summary":
+            return self.create_content_summary_prompt(page_data)
         # Add more tasks here if needed in the future
         else:
             logger.warning(f"Unknown task '{task}', defaulting to OCR fix task")
@@ -315,9 +351,13 @@ Your goal is to provide a Markdown version of the correct text, using these inpu
                     response = connector.get_response(prompt)
                     
                     if response:
-                        # Update text_data in the JSON data
-                        page_data["content"]["text_data"] = response
-                        logger.info(f"Added LLM-processed text for {file_id} page {page_number}")
+                        # Update text_data or page_summary in the JSON data
+                        if llm_task == "ocr_fix":
+                            page_data["content"]["text_data"] = response
+                            logger.info(f"Added LLM-fixed text for {file_id} page {page_number}")
+                        elif llm_task == "page_summary":
+                            page_data["content"]["page_summary"] = response
+                            logger.info(f"Added LLM summary for {file_id} page {page_number}")                            
                         
                         # Save updated JSON data back to file
                         with open(json_file, 'w', encoding='utf-8') as f:
