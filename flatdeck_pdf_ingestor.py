@@ -440,7 +440,7 @@ class PDFIngestor:
                 self._save_page_data(batch_data[original_page], file_id, original_page)
 
     def _extract_images(self, doc: DoclingDocument, local_idx: int, file_id: str, 
-                        original_page: int) -> List[Dict[str, str]]:
+                    original_page: int) -> List[Dict[str, str]]:
         """
         Extract images from a document page and save them to disk.
         
@@ -474,15 +474,31 @@ class PDFIngestor:
                 }
                 
                 # Add any caption text if available
-                if item.captions:
-                    captions = []
-                    for caption_ref in item.captions:
-                        caption_item = doc.resolve_ref(caption_ref)
-                        if caption_item and hasattr(caption_item, 'text'):
-                            captions.append(caption_item.text)
-                    
-                    if captions:
-                        image_info["image_description"] = " ".join(captions)
+                # Use a safer approach to access captions
+                try:
+                    if hasattr(item, 'captions') and item.captions:
+                        captions = []
+                        for caption_ref in item.captions:
+                            # Try different methods to access the caption text
+                            try:
+                                # First try direct access if caption_ref is the text itself
+                                if isinstance(caption_ref, str):
+                                    captions.append(caption_ref)
+                                # Then try to access through doc methods if available
+                                elif hasattr(doc, 'resolve_ref'):
+                                    caption_item = doc.resolve_ref(caption_ref)
+                                    if caption_item and hasattr(caption_item, 'text'):
+                                        captions.append(caption_item.text)
+                                # Try direct property access on caption_ref
+                                elif hasattr(caption_ref, 'text'):
+                                    captions.append(caption_ref.text)
+                            except Exception as e:
+                                logger.warning(f"Error accessing caption: {str(e)}")
+                        
+                        if captions:
+                            image_info["image_description"] = " ".join(captions)
+                except Exception as e:
+                    logger.warning(f"Error processing captions: {str(e)}")
                 
                 image_data.append(image_info)
                 image_counter += 1  # Increment the image counter only when an image is processed
