@@ -19,7 +19,7 @@ FlatDeck's goal is to flatten a PDF into a text file in markdown format that can
 - Docling library for document structure extraction
 - Local GGUF model files as specified in config/models.json
 
-## Installation
+## Installation (WIP)
 
 1. Clone the repository:
    ```bash
