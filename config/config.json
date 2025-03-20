@@ -1,0 +1,66 @@
+{
+    "MAX_PAGES_PER_BATCH": 30,
+    "FILE_ID_FORMAT": "%Y%m%d_%H%M%S",
+    "OUTPUT_FOLDER": "output",
+    "VISION_PROMPT_FILENAME": "vision-prompt.txt",
+    "DEFAULT_VISION_MODEL": {
+      "MODEL_NAME": "GEMMA3_12B",
+      "CACHE_TYPE_K": "q8_0",
+      "CACHE_TYPE_V": "q8_0",
+      "TEMPERATURE": 0.3,
+      "NUM_LAYERS_TO_GPU": 99,
+      "NUM_TOKENS_TO_OUTPUT": 32000,
+      "NUM_TOKENS_OF_CONTEXT": 12000
+    },
+    "DEFAULT_CHAT_MODEL": {
+      "MODEL_NAME": "GEMMA3_12B",
+      "CACHE_TYPE_K": "q4_0",
+      "CACHE_TYPE_V": "q4_0",
+      "TEMPERATURE": 0.3,
+      "NUM_LAYERS_TO_GPU": 99,
+      "NUM_TOKENS_TO_OUTPUT": 64000,
+      "NUM_TOKENS_OF_CONTEXT": 64000
+    },    
+    "IMAGE": {
+      "RESIZE_IMAGE": true,
+      "MIN_RESOLUTION": 50176,
+      "MAX_RESOLUTION": 2073600     
+    },
+    "DOCLING": {
+      "IMAGES_SCALE": 4.0,
+      "THREADS": 24,
+      "DEVICE": "cuda",
+      "OCR_ENGINES": {
+        "NOOCR": {
+          "ENABLED": true
+        },
+        "RAPIDOCR": {
+          "ENABLED": true,
+          "LANG": ["english"],
+          "FORCE_FULL_PAGE": true,
+          "BITMAP_THRESHOLD": 0.05,
+          "TEXT_SCORE": 0.4
+        },
+        "EASYOCR": {
+          "ENABLED": true,
+          "LANG": ["en"],
+          "CONFIDENCE": 0.4,
+          "BITMAP_THRESHOLD": 0.05,
+          "FORCE_FULL_PAGE": true,
+          "RECOG_NETWORK": "standard",
+          "DOWNLOAD_ENABLED": true
+        },
+        "TESSERACT": {
+          "ENABLED": true,
+          "LANG": ["eng"],
+          "FORCE_FULL_PAGE": true,
+          "BITMAP_THRESHOLD": 0.03,
+          "CMD": "tesseract"
+        }
+      },
+      "TABLE": {
+        "MODE": "accurate",
+        "CELL_MATCHING": true
+      }
+    }
+  }
