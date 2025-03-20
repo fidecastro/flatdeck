@@ -557,25 +557,19 @@ class PDFIngestor:
 
 def main():
     """Main function to demonstrate the PDF processor usage."""
-    # Example usage
-    input_doc = "test_slides.pdf"
+    import argparse
     
-    # Optional: Override default configuration
-    custom_config = {
-        "MAX_PAGES_PER_BATCH": 25,
-        "DOCLING": {
-            #"DEVICE": "cpu",  # Use CPU instead of GPU
-            "OCR_ENGINES": {
-                "RAPIDOCR": {
-                    "TEXT_SCORE": 0.5  # Override just this value
-                }
-            }
-        }
-    }
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Process a PDF document using PDFIngestor.")
+    parser.add_argument("pdf_path", help="Path to the PDF document to process")
+
+    args = parser.parse_args()
     
     # Create an ingestor and run
-    ingestor = PDFIngestor(config_override=custom_config)
-    ingestor.ingest_pdf(input_doc)
+    ingestor = PDFIngestor()
+    ingestor.ingest_pdf(args.pdf_path)
+    
+    print(f"PDF ingestion completed successfully for: {args.pdf_path}")
 
 
 if __name__ == "__main__":

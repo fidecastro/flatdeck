@@ -255,27 +255,29 @@ class ImageDescriptor:
             raise
                 
 
-# Example usage
 async def main():
-    # Create an LLM processor and run image description
+    """Main function to demonstrate the image description process."""
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Generate descriptions for images in the output directory.")
+    parser.add_argument("--output", "-o", help="Output directory containing images to describe", default="output")
+    parser.add_argument("--all", "-a", action="store_true", help="Describe all images, including embedded ones", default=False)
+    
+    args = parser.parse_args()
+    
+    # Create an image descriptor and run
     descriptor = ImageDescriptor()
     
-    # Example with default settings
-    await descriptor.describe_images()
+    # Call describe_images with appropriate parameters
+    await descriptor.describe_images(
+        output_dir=args.output,
+        describe_all=args.all
+    )
     
-    # Example with custom output directory and processing all images
-    # await descriptor.describe_images(output_dir="custom_output", describe_all=True)
-    
-    # Example with vision model override
-    # await descriptor.describe_images(
-    #     describe_all=True,
-    #     vision_model_override={
-    #         "MODEL_NAME": "QWEN2_VL_7B",
-    #         "NUM_TOKENS_TO_OUTPUT": 24000,
-    #         "TEMPERATURE": 0.5
-    #     }
-    # )
+    print(f"Image description completed successfully for directory: {args.output}")
 
 
 if __name__ == "__main__":
+    import asyncio
     asyncio.run(main())

@@ -337,22 +337,19 @@ Your goal is to provide a Markdown version of the correct text, using these inpu
             raise
 
 
-# Example usage
 if __name__ == "__main__":
+    """Main function to demonstrate the chat processing."""
+    import argparse
+    
+    # Parse command line arguments
+    parser = argparse.ArgumentParser(description="Process text data using ChatProcessor.")
+    parser.add_argument("--output", "-o", help="Output directory containing JSON files", default="output")
+    parser.add_argument("--task", "-t", help="Task to perform (default: ocr_fix)", default="ocr_fix")
+    
+    args = parser.parse_args()
+    
     # Create a ChatProcessor and run
     processor = ChatProcessor()
+    processor.chat_with_data(output_dir=args.output, llm_task=args.task)
     
-    # Example with default settings
-    processor.chat_with_data()
-    
-    # Example with custom output directory
-    # processor.chat_with_data(output_dir="custom_output")
-    
-    # Example with chat model override
-    # processor.chat_with_data(
-    #     chat_model_override={
-    #         "MODEL_NAME": "DEEPSEEK-R1-QWEN-14B",
-    #         "NUM_TOKENS_TO_OUTPUT": 64000,
-    #         "TEMPERATURE": 0.5
-    #     }
-    # )
+    print(f"Chat processing completed successfully for directory: {args.output}")
