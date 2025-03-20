@@ -1,0 +1,16 @@
+openai
+pillow
+pypdf2
+onnx
+onnxruntime-gpu
+rapidocr-onnxruntime
+requests
+torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
+paddlepaddle-gpu==2.6.1.post120 -f https://www.paddlepaddle.org.cn/whl/linux/mkl/avx/stable.html
+openai
+pillow
+rapidocr_onnxruntime
+rapidocr_paddle
+pypdf2
+tesserocr
+docling
