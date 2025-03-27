@@ -60,7 +60,7 @@ sleep 2
 # Step 4: Page Summary Processing
 echo "-------------------------------------------"
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] Starting page summary creation..."
-python flatdeck_chat_processor.py --task page_summary
+python flatdeck_chat_processor.py --task summary
 if [ $? -ne 0 ]; then
     echo "WARNING: Page summary processing failed. Continuing with markdown generation..."
 fi
