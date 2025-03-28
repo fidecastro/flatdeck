@@ -2,6 +2,8 @@ import json
 import logging
 import os
 import copy
+import time
+from datetime import timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, List, Tuple
 
@@ -52,11 +54,11 @@ Your goal is to provide a Markdown version of the correct text, using these inpu
 
         # Base prompt for content summary
         self.base_summary_prompt = """
-Read the text data extracted from a PDF page, created by OCR, and a description of the image of the page, created by a vision-enabled LLM. You must rewrite the content of the page based on these two inputs, aggregating ALL information contained in them. You must bear in mind the limitations of each source: the text input is more precise than the image description; but, but the image description also contains a lot of metadata that is completely off-limits to the text data alone (for example, descriptions of charts/infographs, logos, etc).
+Read the description of a slide from a PDF file, created by a vision-enabled LLM, as well as the output of an OCR process on the same slide. You must aggregate ALL information contained in both of these outputs.
 
-Bear in mind that the image description is more relevant to slides and pages with a lot of images, while the text data is more relevant to pages (ex: book pages, text emails, etc).
+Use the page description as your main source of information, as it may contain information that is not present in the OCR output, such as, for instance, the interpretation of the slide itself and/or its components (slides, figures, tables etc). Use the OCR output to correct eventual errors or omissions, bearing in mind that a vision-enabled LLM is usually bad at reading text.
 
-To be clear, your task is to consolidate both Page_Text_Data and Page_Image_Description in a single output, which will represent the totality of the information contained in it. You must output ONLY the rewritten content of the page, without any additional explanations."""
+To be clear, your task is to produce a single output which will represent the totality of the information contained in the page. You must output ONLY the consolidated content of the page, without any additional explanations. Preserve all information contained in both inputs at all costs. Prefer markdown formatting on your response."""
     
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """
@@ -261,11 +263,11 @@ To be clear, your task is to consolidate both Page_Text_Data and Page_Image_Desc
         page_description = page_data['content'].get('page_description', '')
         
         # Create the final prompt template
-        prompt = f"""<Page_Text_Data>
-{text_data}</Page_Text_Data>
+        prompt = f"""<Page_Description>
+{page_description}</Page_Description>
 
-<Page_Image_Description>
-{page_description}</Page_Image_Description>
+<Page_OCR_Data>
+{text_data}</Page_OCR_Data>
 
 {self.base_summary_prompt}"""
         
@@ -329,11 +331,30 @@ To be clear, your task is to consolidate both Page_Text_Data and Page_Image_Desc
             
             # Get all JSON files in the output directory
             json_files = list(output_path.glob("*.json"))
-            logger.info(f"Found {len(json_files)} JSON files to process")
+            total_files = len(json_files)
+            logger.info(f"Found {total_files} JSON files to process")
+            
+            # Start timing for progress tracking
+            start_time = time.time()
             
             # Process each JSON file
-            for json_file in json_files:
+            for index, json_file in enumerate(json_files):
                 try:
+                    # Calculate progress
+                    current_file = index + 1
+                    
+                    # Timing calculations
+                    elapsed_time = time.time() - start_time
+                    average_time_per_file = elapsed_time / current_file if current_file > 0 else 0
+                    remaining_files = total_files - current_file
+                    estimated_time_remaining = average_time_per_file * remaining_files
+                    estimated_completion_time = time.strftime("%H:%M:%S", time.localtime(time.time() + estimated_time_remaining))
+                    
+                    # Log progress
+                    logger.info(f"Processing file {current_file}/{total_files} ({(current_file/total_files)*100:.1f}%) - "
+                                f"Elapsed: {str(timedelta(seconds=int(elapsed_time)))} - "
+                                f"Est. completion at: {estimated_completion_time}")
+                    
                     # Load the JSON data
                     with open(json_file, 'r', encoding='utf-8') as f:
                         page_data = json.load(f)
@@ -349,13 +370,17 @@ To be clear, your task is to consolidate both Page_Text_Data and Page_Image_Desc
                     # Get response from the LLM
                     logger.info(f"Sending prompt to LLM for {file_id} page {page_number}")
                     response = connector.get_response(prompt)
+
+                    # Remove everything from the beginning up to and including "</think>" if it exists
+                    if "</think>" in response:
+                        response = response.split("</think>", 1)[1]
                     
                     if response:
                         # Update text_data or page_summary in the JSON data
                         if llm_task == "ocr_fix":
                             page_data["content"]["text_data"] = response
                             logger.info(f"Added LLM-fixed text for {file_id} page {page_number}")
-                        elif llm_task == "page_summary":
+                        elif llm_task == "summary":
                             page_data["content"]["page_summary"] = response
                             logger.info(f"Added LLM summary for {file_id} page {page_number}")                            
                         
@@ -367,6 +392,11 @@ To be clear, your task is to consolidate both Page_Text_Data and Page_Image_Desc
                 
                 except Exception as e:
                     logger.error(f"Error processing {json_file}: {str(e)}", exc_info=True)
+            
+            # Log completion time statistics
+            total_elapsed_time = time.time() - start_time
+            logger.info(f"Processing completed. Total time: {str(timedelta(seconds=int(total_elapsed_time)))}, "
+                        f"Average per file: {str(timedelta(seconds=int(total_elapsed_time/total_files)))}")
             
             # After processing all files, kill the LlamaServerConnector
             connector.kill_server()

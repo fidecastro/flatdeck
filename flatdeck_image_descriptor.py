@@ -1,6 +1,8 @@
 import json
 import logging
 import os
+import time
+from datetime import timedelta
 from pathlib import Path
 from typing import Dict, Any, Optional, List
 import asyncio
@@ -187,11 +189,30 @@ class ImageDescriptor:
                 
             # Get all JSON files in the output directory
             json_files = list(output_path.glob("*.json"))
-            logger.info(f"Found {len(json_files)} JSON files to process")
+            total_files = len(json_files)
+            logger.info(f"Found {total_files} JSON files to process")
+            
+            # Start timing for progress tracking
+            start_time = time.time()
             
             # Process each JSON file
-            for json_file in json_files:
+            for index, json_file in enumerate(json_files):
                 try:
+                    # Calculate progress
+                    current_file = index + 1
+                    
+                    # Timing calculations
+                    elapsed_time = time.time() - start_time
+                    average_time_per_file = elapsed_time / current_file if current_file > 0 else 0
+                    remaining_files = total_files - current_file
+                    estimated_time_remaining = average_time_per_file * remaining_files
+                    estimated_completion_time = time.strftime("%H:%M:%S", time.localtime(time.time() + estimated_time_remaining))
+                    
+                    # Log progress
+                    logger.info(f"Processing file {current_file}/{total_files} ({(current_file/total_files)*100:.1f}%) - "
+                                f"Elapsed: {str(timedelta(seconds=int(elapsed_time)))} - "
+                                f"Est. completion at: {estimated_completion_time}")
+                    
                     # Load the JSON data
                     with open(json_file, 'r', encoding='utf-8') as f:
                         page_data = json.load(f)
@@ -214,6 +235,10 @@ class ImageDescriptor:
                                 prompt=vision_prompt
                             )
                             
+                            # Remove everything from the beginning up to and including "</think>" if it exists
+                            if "</think>" in description:
+                                description = description.split("</think>", 1)[1]
+                            
                             if description:
                                 # Update page description in the JSON data
                                 page_data["content"]["page_description"] = description
@@ -235,6 +260,10 @@ class ImageDescriptor:
                                         str(image_path),
                                         prompt=vision_prompt
                                     )
+                                    
+                                    # Remove everything from the beginning up to and including "</think>" if it exists
+                                    if "</think>" in description:
+                                        description = description.split("</think>", 1)[1]
                                     
                                     if description:
                                         # Update image description in the JSON data

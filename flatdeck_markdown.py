@@ -92,7 +92,7 @@ def build_markdown_file(output_dir: str, pdf_name: str, output_type: str) -> Non
                         markdown_content += f"{img.get('image_description')}\n\n"
             
             # Add strong separator between pages
-            markdown_content += "# ====================\n\n"
+            markdown_content += "\n\n" # "# ====================\n\n"
         
         # Write markdown file
         markdown_file = output_path / f"{pdf_name}_{file_id}.md"
